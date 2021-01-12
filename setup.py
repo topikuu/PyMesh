@@ -3,6 +3,8 @@
 from distutils.command.build import build
 from distutils.command.build_ext import build_ext
 from distutils.command.clean import clean
+from distutils.cmd import Command
+from distutils.util import get_platform
 import multiprocessing
 import os
 import os.path
@@ -17,12 +19,14 @@ num_cores = multiprocessing.cpu_count()
 num_cores = max(1, num_cores)
 num_cores = min(num_cores, int(os.environ.get("NUM_CORES", num_cores)))
 
+
 class BinaryDistribution(Distribution):
     def is_pure(self):
         return False
 
     def has_ext_modules(self):
         return True
+
 
 class CleanCommand(clean):
     def run(self):
@@ -32,6 +36,7 @@ class CleanCommand(clean):
             except Exception:
                 pass
 
+
 class dummy_ext(build_ext):
     """ This is a dummy class.  Cmake is responsible for building python
     extension.  This class is necessary to inform distutils/setuptools that we
@@ -40,11 +45,31 @@ class dummy_ext(build_ext):
     def run(self):
         pass
 
+
 class cmake_build(build):
     """
     Python packaging system is messed up.  This class redirect python to use
     cmake for configuration and compilation of pymesh.
     """
+    description = "Build everything. Ignores '--no-deps' option."
+    user_options = build.user_options + [('no-deps', None, 'no dependencies')]
+    build_lib = 'build/lib'
+    build_base = 'build'
+    build_scripts = 'build/scripts'
+    build_temp = None
+    plat_name = get_platform()
+    compiler = 'unix'
+    debug = True
+    parallel = True
+
+    python_version_internal = "{v[0]}.{v[1]}".format(v=platform.python_version_tuple())
+    executable = "-DPythonLibsNew_FIND_VERSION={}".format(python_version_internal)
+
+    def initialize_options(self):
+        self.no_deps = False
+
+    def finalize_options(self):
+        self.no_deps = False
 
     def build_third_party(self):
         """
@@ -102,6 +127,7 @@ class cmake_build(build):
         self.build_third_party()
         self.build_pymesh()
         build.run(self)
+
 
 setup(
         name = "pymesh2",
