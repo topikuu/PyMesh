@@ -21,7 +21,7 @@ different engines for our users.
 
 .. autofunction:: pymesh.tetrahedralize
 
-In addition to :py:func:`pymesh.tetraheralize`, we also provide a more complete
+In addition to :py:func:`pymesh.tetrahedralize`, we also provide a more complete
 wrapper around Si's awesome `TetGen <http://wias-berlin.de/software/tetgen/>`_
 package.
 
