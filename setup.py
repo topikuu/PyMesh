@@ -223,5 +223,6 @@ setup(
             ],
         url = "https://github.com/qnzhou/PyMesh",
         download_url="https://github.com/qnzhou/PyMesh",
+        install_requires = ['nose'],
         distclass=BinaryDistribution,
         )
