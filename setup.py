@@ -124,7 +124,8 @@ class cmake_build(build):
             os.chdir(cwd)
 
     def run(self):
-        self.build_third_party()
+        if not("SKIP_PYMESH_THIRD_PARTY" in os.environ):
+            self.build_third_party()
         self.build_pymesh()
         build.run(self)
 
