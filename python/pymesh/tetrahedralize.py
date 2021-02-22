@@ -12,13 +12,17 @@ import tempfile
 import subprocess
 from time import time
 
+import shelve
+import copy
+
 def tetrahedralize(mesh,
         cell_size,
         radius_edge_ratio=2.0,
         facet_distance=-1.0,
         feature_angle=120,
         engine="auto",
-        with_timing=False):
+        with_timing=False,
+        cache_location=""):
     """ Create a tetrahedral mesh from input triangle mesh.
 
     Arguments:
@@ -60,6 +64,9 @@ def tetrahedralize(mesh,
     .. _`MMG3D`: https://www.mmgtools.org/
     .. _`TetWild`: https://github.com/Yixin-Hu/TetWild
     """
+
+
+
     logger = logging.getLogger(__name__)
     bbox_min, bbox_max = mesh.bbox
     bbox_diagonal = numpy.linalg.norm(bbox_max - bbox_min)
@@ -84,6 +91,35 @@ def tetrahedralize(mesh,
         raise NotImplementedError("Only triangle mesh is supported for now")
     if engine == 'auto':
         engine = 'tetgen'
+
+    """ Caching:
+        1. Create a unique name out of the arguments
+        2. If a shelf file exists in cache_location, load it and check for the name in
+            it.
+        3. If the name is there, load it.
+        4. Otherwise do the actual tetrahedralization and store it in cache 
+    """
+    data_md5 = hashlib.md5()
+    data_md5.update(mesh.vertices)
+    data_md5.update(mesh.faces)
+
+    cache_name = f"ENG{engine}CS{cell_size}RER{radius_edge_ratio}FD{facet_distance}FA{feature_angle}DATA{data_md5.hexdigest()}"
+
+    if (cache_location != ""):
+        directory = os.path.dirname(cache_location)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        cache = shelve.open(cache_location)
+        if cache_name in cache:
+            (vertices, faces, voxels) = copy.deepcopy(cache[cache_name])
+            output_mesh = form_mesh(vertices, faces, voxels)
+            cache.close()
+            print(f"Read from cache{cache_name}")
+            if with_timing:
+                return output_mesh, 0.0
+            else:
+                return output_mesh
 
     if engine == 'delpsc':
         exec_name = "DelPSC"
@@ -179,9 +215,16 @@ def tetrahedralize(mesh,
         faces = engine.get_faces()
         voxels = engine.get_voxels()
 
+        if (engine == "mmg"):
+            faces = np.concatenate((voxels[:, [0, 1, 2]], voxels[:, [0, 1, 3]], voxels[:, [0, 2, 3]], voxels[:, [1, 2, 3]]))
+
         output_mesh = form_mesh(vertices, faces, voxels)
+        if (cache_location != ""):
+            cache[cache_name] = (vertices, faces, voxels)
+            cache.close()
+            print(f"Wrote to cache {cache_name}")
+
         if with_timing:
             return output_mesh, running_time
         else:
             return output_mesh
-
