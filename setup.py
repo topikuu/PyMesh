@@ -8,6 +8,7 @@ from distutils.util import get_platform
 import multiprocessing
 import os
 import os.path
+import sys
 from setuptools import setup, Distribution, Extension
 from subprocess import check_call
 import shutil
@@ -90,7 +91,7 @@ class cmake_build(build):
                 "third_party/build.py json",
                 ];
         for c in commands:
-            check_call(c.split())
+            check_call([sys.executable] + c.split())
 
     def build_pymesh(self):
         """
@@ -115,7 +116,7 @@ class cmake_build(build):
 
             os.chdir(build_dir)
             commands = [
-                "cmake .. -DCMAKE_BUILD_TYPE=Release" + cmake_args,
+                "cmake .. -DPYMESH_USE_LIBIGL=on -DPYMESH_USE_MMG=on -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=" + sys.executable + " " + cmake_args,
                 "cmake --build . --config Release -- -j {}".format(num_cores),
             ] + (["cmake --build . --target install"] if want_install else [])
             for c in commands:

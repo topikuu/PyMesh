@@ -6,11 +6,12 @@ add_library(lib_Tetrahedralization SHARED)
 add_library(PyMesh::Tetrahedralization ALIAS lib_Tetrahedralization)
 target_link_libraries(lib_Tetrahedralization
     PUBLIC
-        Mesh
+        PyMesh::Mesh
         PyMesh::Tools
     PRIVATE
         PyMesh::MeshUtils
 )
+target_include_directories(lib_Tetrahedralization PRIVATE ${LIBIGL_INCLUDE_DIRS})
 set_target_properties(lib_Tetrahedralization PROPERTIES OUTPUT_NAME
     "PyMesh-Tetrahedronization")
 

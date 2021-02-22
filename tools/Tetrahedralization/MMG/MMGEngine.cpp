@@ -1,6 +1,5 @@
 /* This file is part of PyMesh. Copyright (c) 2018 by Qingnan Zhou */
 #if defined(WITH_MMG) && defined(WITH_TETGEN) && defined(WITH_IGL)
-
 #include "MMGEngine.h"
 #include <Core/Exception.h>
 #include <TetGen/TetgenWrapper.h>
@@ -113,7 +112,8 @@ void MMGEngine::run() {
     r = MMG3D_Chk_meshData(mmgMesh,mmgSol);
     if (!r) { throw RuntimeError("MMG3D_Chk_meshData function failed."); }
 
-    r = MMG3D_mmg3dls(mmgMesh,mmgSol);
+
+    r = MMG3D_mmg3dls(mmgMesh,mmgSol,nullptr);
     if (r == MMG5_STRONGFAILURE) {
         throw RuntimeError("MMG strong failure");
     } else if (r == MMG5_LOWFAILURE) {
